@@ -16,7 +16,7 @@ export const app: Application = express();
 
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
-app.use(helmet());
+app.use(helmet);
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true }));
 
