@@ -62,7 +62,7 @@
     "body-parser": "^2.2.0",
     "chart.js": "^4.5.0",
     "chartjs-adapter-date-fns": "^3.0.0",
-    "cloudinary": "^2.6.1",
+    "cloudinary": "^1.41.3",
     "copyfiles": "^2.4.1",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
