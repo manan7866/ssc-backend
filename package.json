@@ -13,7 +13,7 @@
     "build": "bun run tsc --build",
     "build:prod": "rimraf -rf ./dist && bun run tsc --build",
     "dev": "bun run build  && concurrently  \"bun run --env-file .env --watch ./src/server.ts\" \"tsc -w\"",
-    "start": "bun run --env-file .env ./dist/server.js"
+    "start": "bun run --env-file .env ./dist/server.js",
     "start:prod": "bun run build:prod && bun run --env-file .env ./dist/server.js",
     "commit-lint": "commitlint  --edit",
     "precommit": "concurrently \"eslint .\" \"bun run type-check && bun run fmt && git add .\"",
@@ -88,4 +88,5 @@
     "skipCI": true
   }
 }
+
 
