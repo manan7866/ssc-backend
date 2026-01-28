@@ -43,16 +43,23 @@ FROM oven/bun:slim AS production
 
 WORKDIR /app
 
-# Copy only production dependencies
+# Copy production dependencies
 COPY --from=production-deps /app/node_modules ./node_modules
 
-# Copy built application
+# Copy built application and generated Prisma client (from builder stage where it was already generated)
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
 # Create non-root user for security
 RUN groupadd -g 1001 nodejs && \
     useradd -u 1001 -g nodejs nodejs
+
+# Create logs directory and set permissions for the non-root user
+RUN mkdir -p logs && \
+    chown -R nodejs:nodejs /app && \
+    chmod 755 /app && \
+    chmod 777 logs
 
 # Switch to non-root user
 USER nodejs:nodejs
@@ -64,4 +71,4 @@ EXPOSE 8001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8001/health || exit 1
 
-CMD ["bun", "run", "start"]
+CMD ["bun", "./dist/server.js"]
