@@ -18,15 +18,48 @@ export default {
   register: asyncHandler(async (req, res) => {
     const body = req.body as User;
     // ** validation is already handled by  middleware
-    const user = await db.user.findFirst({
+    const existingUser = await db.user.findFirst({
       where: {
         email: body.email
       }
     });
-    if (user) {
-      httpResponse(req, res, reshttp.badRequestCode, "User already exists with same email.");
-      return;
+
+    // If user exists and is already verified, return error
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        httpResponse(req, res, reshttp.badRequestCode, "User already exists with same email.");
+        return;
+      } else {
+        // If user exists but is not verified, update the existing user instead of creating a new one
+        const OTP_TOKEN = generateOtp();
+        const hashedPassword = (await passwordHasher(body.password!, res)) as string;
+
+        await db.user.update({
+          where: { email: body.email },
+          data: {
+            fullName: body.fullName,
+            password: hashedPassword,
+            role: body.role ?? "user",
+            OTP: OTP_TOKEN.otp,
+            OTP_EXPIRES_IN: OTP_TOKEN.otpExpiry,
+            isVerified: false
+          }
+        });
+
+        try {
+          await gloabalMailMessage(body.email, messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`));
+        } catch (e) {
+          logger.error(e);
+          return httpResponse(req, res, reshttp.internalServerErrorCode, "We couldn't send the OTP email at this time. Please try again later.");
+        }
+
+        httpResponse(req, res, reshttp.createdCode, reshttp.createdMessage, {
+          email: body.email
+        });
+        return;
+      }
     }
+
     const OTP_TOKEN = generateOtp();
     const hashedPassword = (await passwordHasher(body.password!, res)) as string;
     await db.user.create({
