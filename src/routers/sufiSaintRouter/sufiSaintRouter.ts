@@ -8,6 +8,7 @@ export const sufiSaintRouter: Router = Router();
 sufiSaintRouter.get("/", SufiSaintController.getAll);
 sufiSaintRouter.get("/periods", SufiSaintController.getPeriods);
 sufiSaintRouter.get("/centuries", SufiSaintController.getCenturies);
+sufiSaintRouter.get("/regions", SufiSaintController.getRegions);
 sufiSaintRouter.get("/tags", SufiSaintController.getTags);
 sufiSaintRouter.get("/:id", SufiSaintController.getById);
 

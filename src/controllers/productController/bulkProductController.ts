@@ -1,4 +1,4 @@
-import { PrismaClient, type Accessories, type Decoration, type DigitalBook, type Fashion, type HomeAndLiving, type Meditation } from "@prisma/client";
+import { type Accessories, type Decoration, type DigitalBook, type Fashion, type HomeAndLiving, type Meditation } from "@prisma/client";
 import fsp from "fs/promises";
 import reshttp from "reshttp";
 import { type _Request } from "../../middleware/authMiddleware.js";
@@ -6,8 +6,7 @@ import type { RowData, TCategory } from "../../type/types.js";
 import { httpResponse } from "../../utils/apiResponseUtils.js";
 import { asyncHandler } from "../../utils/asyncHandlerUtils.js";
 import logger from "../../utils/loggerUtils.js";
-
-const prisma = new PrismaClient();
+import prisma from "../../utils/prismaSingleton.js";
 
 interface BaseProductData {
   title: string;

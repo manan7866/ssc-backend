@@ -1,16 +1,13 @@
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import prisma from "../utils/prismaSingleton.js";
 import logger from "../utils/loggerUtils.js";
-
-const prisma = new PrismaClient();
 
 // Zod schema for validation
 export const SufiSaintSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, "Name is required"),
   datesRaw: z.string().nullable().optional(),
-  birthYear: z.number().nullable().optional(),
-  deathYear: z.number().nullable().optional(),
+  region: z.string().nullable().optional(),
   period: z.string().nullable().optional(),
   century: z.string().nullable().optional(),
   summary: z.string().min(1, "Summary is required"),
@@ -31,8 +28,7 @@ export interface SufiSaintData {
   id: number;
   name: string;
   dates_raw: string | null;
-  birth_year: number | null;
-  death_year: number | null;
+  region: string | null;
   period: string | null;
   century: string | null;
   summary: string;
@@ -43,16 +39,24 @@ export class SufiSaintService {
   /**
    * Get all Sufi Saints with optional filters
    */
-  static async getAll(filters?: { period?: string; century?: string; tag?: string; search?: string }): Promise<SufiSaintListResponse> {
+  static async getAll(filters?: {
+    period?: string;
+    century?: string;
+    region?: string;
+    tag?: string;
+    search?: string;
+  }): Promise<SufiSaintListResponse> {
     try {
       const where: {
         isPublished: boolean;
         period?: string;
         century?: string;
+        region?: string;
         tags?: { has: string };
         OR?: Array<{
           name?: { contains: string; mode: "insensitive" };
           summary?: { contains: string; mode: "insensitive" };
+          region?: { contains: string; mode: "insensitive" };
         }>;
       } = {
         isPublished: true
@@ -66,6 +70,10 @@ export class SufiSaintService {
         where.century = filters.century;
       }
 
+      if (filters?.region) {
+        where.region = filters.region;
+      }
+
       if (filters?.tag) {
         where.tags = {
           has: filters.tag
@@ -73,27 +81,28 @@ export class SufiSaintService {
       }
 
       if (filters?.search) {
-        where.OR = [{ name: { contains: filters.search, mode: "insensitive" } }, { summary: { contains: filters.search, mode: "insensitive" } }];
+        where.OR = [
+          { name: { contains: filters.search, mode: "insensitive" } },
+          { summary: { contains: filters.search, mode: "insensitive" } },
+          { region: { contains: filters.search, mode: "insensitive" } }
+        ];
       }
 
       const saints = await prisma.sufiSaint.findMany({
         where,
-        orderBy: [{ birthYear: "asc" }, { name: "asc" }]
+        orderBy: [{ region: "asc" }, { name: "asc" }]
       });
 
       return {
         collection: "Kashmir Sufi Legacy",
         count: saints.length,
-        fields: ["name", "dates_raw", "birth_year", "death_year", "period", "century", "summary", "tags"],
+        fields: ["name", "dates_raw", "region", "period", "century", "summary", "tags"],
         data: saints.map((saint) => ({
           id: saint.id,
           name: saint.name,
           // eslint-disable-next-line camelcase
           dates_raw: saint.datesRaw,
-          // eslint-disable-next-line camelcase
-          birth_year: saint.birthYear,
-          // eslint-disable-next-line camelcase
-          death_year: saint.deathYear,
+          region: saint.region,
           period: saint.period,
           century: saint.century,
           summary: saint.summary,
@@ -124,10 +133,7 @@ export class SufiSaintService {
         name: saint.name,
         // eslint-disable-next-line camelcase
         dates_raw: saint.datesRaw,
-        // eslint-disable-next-line camelcase
-        birth_year: saint.birthYear,
-        // eslint-disable-next-line camelcase
-        death_year: saint.deathYear,
+        region: saint.region,
         period: saint.period,
         century: saint.century,
         summary: saint.summary,
@@ -150,8 +156,7 @@ export class SufiSaintService {
         data: {
           name: validated.name,
           datesRaw: validated.datesRaw ?? null,
-          birthYear: validated.birthYear ?? null,
-          deathYear: validated.deathYear ?? null,
+          region: validated.region ?? null,
           period: validated.period ?? null,
           century: validated.century ?? null,
           summary: validated.summary,
@@ -167,10 +172,7 @@ export class SufiSaintService {
         name: saint.name,
         // eslint-disable-next-line camelcase
         dates_raw: saint.datesRaw,
-        // eslint-disable-next-line camelcase
-        birth_year: saint.birthYear,
-        // eslint-disable-next-line camelcase
-        death_year: saint.deathYear,
+        region: saint.region,
         period: saint.period,
         century: saint.century,
         summary: saint.summary,
@@ -192,8 +194,7 @@ export class SufiSaintService {
         data: {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.datesRaw !== undefined && { datesRaw: data.datesRaw }),
-          ...(data.birthYear !== undefined && { birthYear: data.birthYear }),
-          ...(data.deathYear !== undefined && { deathYear: data.deathYear }),
+          ...(data.region !== undefined && { region: data.region }),
           ...(data.period !== undefined && { period: data.period }),
           ...(data.century !== undefined && { century: data.century }),
           ...(data.summary !== undefined && { summary: data.summary }),
@@ -209,10 +210,7 @@ export class SufiSaintService {
         name: saint.name,
         // eslint-disable-next-line camelcase
         dates_raw: saint.datesRaw,
-        // eslint-disable-next-line camelcase
-        birth_year: saint.birthYear,
-        // eslint-disable-next-line camelcase
-        death_year: saint.deathYear,
+        region: saint.region,
         period: saint.period,
         century: saint.century,
         summary: saint.summary,
@@ -313,6 +311,33 @@ export class SufiSaintService {
       return Array.from(allTags).sort();
     } catch (error) {
       logger.error("sufiSaint.getTags", { error: String(error) });
+      return [];
+    }
+  }
+
+  /**
+   * Get unique regions
+   */
+  static async getRegions(): Promise<string[]> {
+    try {
+      const results = await prisma.sufiSaint.findMany({
+        where: {
+          region: {
+            not: null
+          }
+        },
+        select: {
+          region: true
+        },
+        distinct: ["region"]
+      });
+
+      return results
+        .map((r) => r.region)
+        .filter((r): r is string => r !== null)
+        .sort();
+    } catch (error) {
+      logger.error("sufiSaint.getRegions", { error: String(error) });
       return [];
     }
   }

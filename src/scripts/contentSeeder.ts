@@ -1,10 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
-import { PrismaClient, ContentSection } from "@prisma/client";
+import { ContentSection } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
+import prisma from "../utils/prismaSingleton.js";
 
 const ContentItemSchema = z.object({
   id: z.string(),

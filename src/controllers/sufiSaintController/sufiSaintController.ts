@@ -4,9 +4,10 @@ import { asyncHandler } from "../../utils/asyncHandlerUtils.js";
 import { SufiSaintService, SufiSaintSchema, type SufiSaintInput } from "../../services/sufiSaint.service.js";
 
 const getAll = asyncHandler(async (req: Request, res: Response) => {
-  const { period, century, tag, search } = req.query as {
+  const { period, century, region, tag, search } = req.query as {
     period?: string;
     century?: string;
+    region?: string;
     tag?: string;
     search?: string;
   };
@@ -14,6 +15,7 @@ const getAll = asyncHandler(async (req: Request, res: Response) => {
   const data = await SufiSaintService.getAll({
     period,
     century,
+    region,
     tag,
     search
   });
@@ -94,6 +96,11 @@ const getTags = asyncHandler(async (req: Request, res: Response) => {
   return httpResponse(req, res, 200, "ok", { tags });
 });
 
+const getRegions = asyncHandler(async (req: Request, res: Response) => {
+  const regions = await SufiSaintService.getRegions();
+  return httpResponse(req, res, 200, "ok", { regions });
+});
+
 export default {
   getAll,
   getById,
@@ -103,5 +110,6 @@ export default {
   validate,
   getPeriods,
   getCenturies,
-  getTags
+  getTags,
+  getRegions
 };

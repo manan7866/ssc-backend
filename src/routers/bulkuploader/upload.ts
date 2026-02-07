@@ -3,12 +3,12 @@ import type { Request, Response } from "express";
 import multer from "multer";
 import fsp from "fs/promises";
 import path from "path";
-import { PrismaClient, type Accessories, type Decoration, type HomeAndLiving, type Fashion, type Meditation, type DigitalBook } from "@prisma/client";
+import { type Accessories, type Decoration, type HomeAndLiving, type Fashion, type Meditation, type DigitalBook } from "@prisma/client";
 import authMiddleware, { type _Request } from "../../middleware/authMiddleware.js";
 import { uploadOnCloudinary } from "../../services/cloudinary.service.js";
+import prisma from "../../utils/prismaSingleton.js";
 
 export const uploadRouter: Router = Router();
-const prisma = new PrismaClient();
 
 // Multer configuration
 const upload = multer({

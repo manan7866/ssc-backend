@@ -1611,8 +1611,7 @@ model SufiSaint {
   id         Int      @id @default(autoincrement())
   name       String
   datesRaw   String?  @map("dates_raw")
-  birthYear  Int?     @map("birth_year")
-  deathYear  Int?     @map("death_year")
+  region     String?  
   period     String?
   century    String?
   summary    String   @db.Text
@@ -1620,7 +1619,7 @@ model SufiSaint {
   isPublished Boolean @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
+  @@index([region])
   @@index([period])
   @@index([century])
   @@index([isPublished])

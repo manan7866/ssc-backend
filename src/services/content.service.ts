@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { PrismaClient, ContentSection } from "@prisma/client";
+import { ContentSection } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import logger from "../utils/loggerUtils.js";
-
-const prisma = new PrismaClient();
+import prisma from "../utils/prismaSingleton.js";
 
 export const ContentItemSchema = z.object({
   id: z.string(),

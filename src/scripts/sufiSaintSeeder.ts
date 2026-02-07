@@ -1,9 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
 import { fileURLToPath } from "url";
-
-const prisma = new PrismaClient();
+import prisma from "../utils/prismaSingleton.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,8 +9,7 @@ const __dirname = path.dirname(__filename);
 interface SufiSaintJSON {
   name: string;
   dates_raw?: string | null;
-  birth_year?: number | null;
-  death_year?: number | null;
+  region?: string | null;
   period?: string | null;
   century?: string | null;
   summary: string;
@@ -67,8 +64,7 @@ async function seedSufiSaints(): Promise<void> {
             where: { id: existing.id },
             data: {
               datesRaw: saint.dates_raw ?? null,
-              birthYear: saint.birth_year ?? null,
-              deathYear: saint.death_year ?? null,
+              region: saint.region ?? null,
               period: saint.period ?? null,
               century: saint.century ?? null,
               summary: saint.summary,
@@ -84,8 +80,7 @@ async function seedSufiSaints(): Promise<void> {
             data: {
               name: saint.name,
               datesRaw: saint.dates_raw ?? null,
-              birthYear: saint.birth_year ?? null,
-              deathYear: saint.death_year ?? null,
+              region: saint.region ?? null,
               period: saint.period ?? null,
               century: saint.century ?? null,
               summary: saint.summary,
