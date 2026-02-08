@@ -10,7 +10,7 @@ import { generateRandomStrings } from "../utils/slugStringGeneratorUtils.js";
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
   port: SMTP_PORT,
-  secure: true,
+  secure: false,
   auth: {
     user: HOST_EMAIL,
     pass: HOST_EMAIL_SECRET
