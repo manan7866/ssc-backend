@@ -1,6 +1,7 @@
 import reshttp from "reshttp";
 import { db } from "../../configs/database.js";
 import type { _Request } from "../../middleware/authMiddleware.js";
+import { gloabalMailMessage } from "../../services/globalEmailMessageService.js";
 import type { TCONFERENCE_UPDATE, TCREATE_CONFERENCE_REGISTRATION } from "../../type/types.js";
 import { httpResponse } from "../../utils/apiResponseUtils.js";
 import { asyncHandler } from "../../utils/asyncHandlerUtils.js";
@@ -29,6 +30,30 @@ export default {
 
       if (!conference) {
         return httpResponse(req, res, reshttp.internalServerErrorCode, "Conference not created", conference);
+      }
+
+      // Send confirmation email to the user
+      try {
+        await gloabalMailMessage(
+          user.email,
+          `Dear ${user.fullName}, thank you for registering for the conference.`,
+          "Conference Submission Confirmation",
+          undefined,
+          undefined,
+          `Hi ${user.fullName}`,
+          {
+            id: "conference-submission-confirmation",
+            variables: {
+              FULL_NAME: user.fullName || "User",
+              PRESENTATION_TYPE: data.presentationType || "Not specified",
+              TOPIC_THEME: data.topic || "Not specified",
+              INSTITUTION: data.institution || "Not specified"
+            }
+          }
+        );
+      } catch (emailError) {
+        logger.error("Error sending conference confirmation email:", emailError);
+        // Don't fail the whole operation if email sending fails
       }
 
       return httpResponse(req, res, reshttp.createdCode, "Conference created", conference);

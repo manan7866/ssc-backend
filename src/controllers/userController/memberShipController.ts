@@ -5,6 +5,7 @@ import type { TMEMBERSHIP } from "../../type/types.js";
 import { httpResponse } from "../../utils/apiResponseUtils.js";
 import { asyncHandler } from "../../utils/asyncHandlerUtils.js";
 import logger from "../../utils/loggerUtils.js";
+import { gloabalMailMessage } from "../../services/globalEmailMessageService.js";
 
 export default {
   membership: asyncHandler(async (req: _Request, res) => {
@@ -50,6 +51,78 @@ export default {
         volunteerSupport: data.volunteerSupport
       }
     });
+
+    // Send confirmation email based on membership type
+    try {
+      // Determine the membership type and send appropriate email
+      const roles = Array.isArray(data.role) ? data.role : [data.role];
+
+      for (const role of roles) {
+        switch (role) {
+          case "collaborator":
+            await gloabalMailMessage(
+              user.email,
+              `Dear ${user.fullName}, thank you for applying as a collaborator.`,
+              "Collaboration Inquiry Confirmation",
+              undefined,
+              undefined,
+              `Hi ${user.fullName}`,
+              {
+                id: "collaboration-inquiry-confirmation",
+                variables: {
+                  FULL_NAME: user.fullName || "User",
+                  COLLABORATION_INTENT: Array.isArray(data.collaboratorIntent)
+                    ? data.collaboratorIntent.join(", ")
+                    : data.collaboratorIntent || "Not specified",
+                  ORGANIZATION_NAME: data.organization || "Not specified"
+                }
+              }
+            );
+            break;
+
+          case "volunteer":
+            await gloabalMailMessage(
+              user.email,
+              `Dear ${user.fullName}, thank you for applying as a volunteer.`,
+              "Volunteer Application Confirmation",
+              undefined,
+              undefined,
+              `Hi ${user.fullName}`,
+              {
+                id: "volunteer-application-confirmation",
+                variables: {
+                  FULL_NAME: user.fullName || "User",
+                  AREAS_OF_SUPPORT: data.volunteerSupport?.join(", ") || "Not specified",
+                  PREFERRED_MODE: data.volunteerMode || "Not specified"
+                }
+              }
+            );
+            break;
+
+          case "donor":
+            await gloabalMailMessage(
+              user.email,
+              `Dear ${user.fullName}, thank you for applying as a donor.`,
+              "Donor Application Confirmation",
+              undefined,
+              undefined,
+              `Hi ${user.fullName}`,
+              {
+                id: "donor-application-confirmation",
+                variables: {
+                  FULL_NAME: user.fullName || "User",
+                  DONOR_PREFERENCES: data.donorType?.join(", ") || "Not specified"
+                }
+              }
+            );
+            break;
+        }
+      }
+    } catch (emailError) {
+      logger.error("Error sending membership confirmation email:", emailError);
+      // Don't fail the whole operation if email sending fails
+    }
+
     logger.info("Membership created");
     return httpResponse(req, res, reshttp.createdCode, "Membership created", member);
   }),

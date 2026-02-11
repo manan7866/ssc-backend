@@ -6,7 +6,6 @@ import type { InterviewRequestBody, TCREATE_INTERVIEW_REQUEST } from "../../type
 import { httpResponse } from "../../utils/apiResponseUtils.js";
 import { asyncHandler } from "../../utils/asyncHandlerUtils.js";
 import logger from "../../utils/loggerUtils.js";
-import messageSenderUtils from "../../utils/messageSenderUtils.js";
 
 export default {
   interviewBook: asyncHandler(async (req: _Request, res) => {
@@ -47,7 +46,24 @@ export default {
       return httpResponse(req, res, reshttp.internalServerErrorCode, "interView not created", interView);
     }
     try {
-      await gloabalMailMessage(user.email, messageSenderUtils.interviewScheduleMessage());
+      // Send interview confirmation email with specific details
+      await gloabalMailMessage(
+        user.email,
+        `Dear ${user.fullName}, thank you for booking an interview with us.`,
+        "Interview Application Confirmation",
+        undefined,
+        undefined,
+        `Hi ${user.fullName}`,
+        {
+          id: "interview-application-confirmation",
+          variables: {
+            FULL_NAME: user.fullName || "User",
+            INTERVIEW_DATE: data.scheduledAt ? new Date(data.scheduledAt).toLocaleDateString() : "Not scheduled",
+            INTERVIEW_TIME: data.scheduledAt ? new Date(data.scheduledAt).toLocaleTimeString() : "Not scheduled",
+            INTERVIEW_TONE: data.interviewTimeZone || "Not specified"
+          }
+        }
+      );
     } catch (e) {
       logger.error(e);
     }
@@ -128,7 +144,27 @@ export default {
           id: updatedInterview.userId
         }
       });
-      await gloabalMailMessage(userDetails?.email ?? "", messageSenderUtils.interviewScheduleMessage());
+
+      // Send interview acceptance confirmation email
+      if (userDetails) {
+        await gloabalMailMessage(
+          userDetails.email,
+          `Dear ${userDetails.fullName}, your interview has been scheduled.`,
+          "Interview Scheduled",
+          undefined,
+          undefined,
+          `Hi ${userDetails.fullName}`,
+          {
+            id: "interview-application-confirmation",
+            variables: {
+              FULL_NAME: userDetails.fullName || "User",
+              INTERVIEW_DATE: updatedInterview.scheduledAt ? new Date(updatedInterview.scheduledAt).toLocaleDateString() : "Not scheduled",
+              INTERVIEW_TIME: updatedInterview.scheduledAt ? new Date(updatedInterview.scheduledAt).toLocaleTimeString() : "Not scheduled",
+              INTERVIEW_TONE: updatedInterview.interviewTimeZone || "Not specified"
+            }
+          }
+        );
+      }
     } catch (e) {
       logger.error(e);
     }
