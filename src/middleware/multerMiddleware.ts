@@ -89,7 +89,8 @@ const fileUploader: RequestHandler = async (req, res, next) => {
     { name: "document", maxCount: 1 },
     { name: "music", maxCount: 3 },
     { name: "video", maxCount: 2 },
-    { name: "vendorNic", maxCount: 2 } //  yeh naya add kiya
+    { name: "vendorNic", maxCount: 2 }, //  yeh naya add kiya
+    { name: "avatar", maxCount: 1 } // Added for user avatar upload
   ]);
 
   await uploader(req, res, (err?) => {
@@ -98,6 +99,21 @@ const fileUploader: RequestHandler = async (req, res, next) => {
       return res.status(400).json({ error: (err as Error).message });
     }
     logger.info(`Uploaded files: ${JSON.stringify(req.files, null, 2)}`);
+    next();
+  });
+};
+
+// Avatar upload middleware for single file
+import type { Request, Response, NextFunction } from "express";
+
+export const avatarUpload = (req: Request, res: Response, next: NextFunction) => {
+  const uploadSingle = upload.single("avatar");
+
+  void uploadSingle(req, res, (err) => {
+    if (err) {
+      logger.error("Avatar upload error:", err);
+      return res.status(400).json({ error: (err as Error).message });
+    }
     next();
   });
 };

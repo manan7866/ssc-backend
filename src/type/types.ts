@@ -132,6 +132,7 @@ export interface TPROFILE {
   zipCode?: string;
   country?: string;
   phone?: string;
+  avatar?: string;
 }
 export interface TINTERVIEW {
   fullName?: string;

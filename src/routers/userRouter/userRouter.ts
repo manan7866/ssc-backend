@@ -11,6 +11,7 @@ import sufiCheckListController from "../../controllers/userController/sufiCheckL
 import vendors from "../../controllers/userController/vendors.js";
 import wishlistController from "../../controllers/userController/wishlistController.js";
 import authMiddleware from "../../middleware/authMiddleware.js";
+import { avatarUpload } from "../../middleware/multerMiddleware.js";
 import { validateDataMiddleware } from "../../middleware/validateMiddleware.js";
 import {
   bookInterviewSchema,
@@ -32,6 +33,7 @@ export const userRouter: Router = Router();
 
 userRouter.route("/profile").patch(authMiddleware.checkToken, validateDataMiddleware(userUpdateSchema), profileController.updateUserProfile);
 userRouter.route("/profile").get(authMiddleware.checkToken, profileController.viewUserProfile);
+userRouter.route("/profile/avatar").post(authMiddleware.checkToken, avatarUpload, profileController.uploadAvatar);
 
 //vendors
 userRouter.route("/vendors-list").get(vendors.getVendors);

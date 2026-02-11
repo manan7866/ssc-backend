@@ -391,6 +391,11 @@ export const userUpdateSchema = z.object({
     .string({
       message: "Must be valid country"
     })
+    .optional(),
+  avatar: z
+    .string({
+      message: "Must be valid avatar URL"
+    })
     .optional()
 });
 
