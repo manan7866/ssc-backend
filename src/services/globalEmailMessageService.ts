@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
   port: SMTP_PORT,
   secure: false,
   auth: {
-    user: HOST_EMAIL,
+    user: "resend",
     pass: HOST_EMAIL_SECRET
   }
 });
