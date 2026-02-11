@@ -1,78 +1,78 @@
-import fs from "node:fs";
-import path from "node:path";
-import nodemailer from "nodemailer";
 import reshttp from "reshttp";
-import { HOST_EMAIL, HOST_EMAIL_SECRET, SMTP_HOST, SMTP_PORT } from "../configs/config.js";
 import constant from "../constants/constant.js";
 import logger from "../utils/loggerUtils.js";
-import { replaceAllPlaceholders } from "../utils/replaceAllPlaceholders.js";
-import { generateRandomStrings } from "../utils/slugStringGeneratorUtils.js";
-const transporter = nodemailer.createTransport({
-  host: SMTP_HOST,
-  port: SMTP_PORT,
-  secure: true,
-  auth: {
-    user: HOST_EMAIL,
-    pass: HOST_EMAIL_SECRET
-  }
-});
+import { sendEmailWithTemplate } from "./emailService.js";
+import type { EmailTemplate } from "./emailService.js";
 
 export async function gloabalMailMessage(
   to: string,
   message?: string | null,
   subject?: string,
-  header?: string,
-  addsOn?: string,
-  senderIntro?: string
+  _header?: string,
+  _addsOn?: string,
+  _senderIntro?: string,
+  template?: EmailTemplate
 ) {
-  const templatePath = path.resolve(__dirname, "../../templates/globalEmailMessageTemplate.html");
+  // If a template is provided, use the new Resend service
+  if (template) {
+    try {
+      const result = await sendEmailWithTemplate({
+        to,
+        subject: subject ?? constant.COMPANY_NAME,
+        template: template
+      });
 
-  if (!fs.existsSync(templatePath)) {
-    logger.error(`Email template file not found at path: ${templatePath}`, {
-      code: "ENOENT",
-      path: templatePath,
-      syscall: "open"
-    });
-    throw {
-      status: reshttp.internalServerErrorCode,
-      message: "Email template file is missing. Please contact system administrator."
-    };
+      if (!result.success) {
+        logger.error(`Error sending email with template: ${result.error}`);
+        throw {
+          status: reshttp.internalServerErrorCode,
+          message: result.error || reshttp.internalServerErrorMessage
+        };
+      }
+
+      logger.info(`Email message sent successfully with template: ${result.messageId}`);
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        logger.error(`Error Email message sending with template: ${error.message}`);
+        throw { status: reshttp.internalServerErrorCode, message: reshttp.internalServerErrorMessage };
+      }
+      logger.error(`Error sending Email message with template: ${error as string}`, { error });
+      throw { status: reshttp.internalServerErrorCode, message: reshttp.notImplementedMessage };
+    }
   }
 
-  let htmlTemplate = fs.readFileSync(templatePath, "utf8");
-  const placeholders = {
-    companyname: constant.COMPANY_NAME || "Prime Logic Solutions",
-    senderIntro: senderIntro || "",
-    message: message || "",
-    header: header || "",
-    addsOn: addsOn || ""
-  };
-  htmlTemplate = replaceAllPlaceholders(htmlTemplate, placeholders);
-  const randomStr = generateRandomStrings(10);
-  const mailOptions = {
-    from: HOST_EMAIL,
-    to: to,
-    subject: subject ?? constant.COMPANY_NAME,
-    html: htmlTemplate,
-    headers: {
-      "X-Auto-Response-Suppress": "All",
-      Precedence: "bulk",
-      "Auto-Submitted": "auto-generated",
-      "Message-ID": `<${randomStr}.dev>`
-    },
-
-    replyTo: "support@primelogicsole.com"
-  };
-
+  // Fallback to original implementation for backward compatibility
   try {
-    const info = await transporter.sendMail(mailOptions);
-    logger.info(`Email message sent successfully: ${info.response}`);
+    // Use the new email service with a basic template
+    const result = await sendEmailWithTemplate({
+      to,
+      subject: subject ?? constant.COMPANY_NAME,
+      template: {
+        id: "basic-html-template", // This would be a default template in Resend
+        variables: {
+          content: message || "",
+          companyName: constant.COMPANY_NAME || "Sufism Ecommerce"
+        }
+      }
+    });
+
+    if (!result.success) {
+      logger.error(`Error sending email: ${result.error}`);
+      throw {
+        status: reshttp.internalServerErrorCode,
+        message: result.error || reshttp.internalServerErrorMessage
+      };
+    }
+
+    logger.info(`Email message sent successfully: ${result.messageId}`);
+    return result;
   } catch (error) {
     if (error instanceof Error) {
-      logger.error(`Error Email message sending :${error.message}`);
+      logger.error(`Error Email message sending: ${error.message}`);
       throw { status: reshttp.internalServerErrorCode, message: reshttp.internalServerErrorMessage };
     }
-    logger.error(`Error sending Email  message:${error as string}`, { error });
+    logger.error(`Error sending Email message: ${error as string}`, { error });
     throw { status: reshttp.internalServerErrorCode, message: reshttp.notImplementedMessage };
   }
 }

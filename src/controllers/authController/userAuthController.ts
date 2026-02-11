@@ -47,7 +47,20 @@ export default {
         });
 
         try {
-          await gloabalMailMessage(body.email, messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`));
+          await gloabalMailMessage(
+            body.email,
+            messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
+            "Email Verification",
+            undefined,
+            undefined,
+            `Hi ${body.fullName}`,
+            {
+              id: "email-verification-code",
+              variables: {
+                OTP_CODE: OTP_TOKEN.otp
+              }
+            }
+          );
         } catch (e) {
           logger.error(e);
           return httpResponse(req, res, reshttp.internalServerErrorCode, "We couldn't send the OTP email at this time. Please try again later.");
@@ -74,7 +87,20 @@ export default {
       }
     });
     try {
-      await gloabalMailMessage(body.email, messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`));
+      await gloabalMailMessage(
+        body.email,
+        messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
+        "Email Verification",
+        undefined,
+        undefined,
+        `Hi ${body.fullName}`,
+        {
+          id: "email-verification-code",
+          variables: {
+            OTP_CODE: OTP_TOKEN.otp
+          }
+        }
+      );
     } catch (e) {
       logger.error(e);
       return httpResponse(req, res, reshttp.internalServerErrorCode, "We couldn’t send the OTP email at this time. Please try again later.");
@@ -170,7 +196,20 @@ export default {
         data: { OTP: OTP_TOKEN.otp, OTP_EXPIRES_IN: OTP_TOKEN.otpExpiry }
       });
       try {
-        await gloabalMailMessage(body.email, messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`));
+        await gloabalMailMessage(
+          body.email,
+          messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
+          "Email Verification",
+          undefined,
+          undefined,
+          `Hi ${user.fullName}`,
+          {
+            id: "email-verification-code",
+            variables: {
+              OTP_CODE: OTP_TOKEN.otp
+            }
+          }
+        );
       } catch (e) {
         logger.error("Error sending email:", e);
         return httpResponse(req, res, reshttp.internalServerErrorCode, "Failed to send email, please try again.");
@@ -238,12 +277,18 @@ export default {
       data: { OTP: OTP_TOKEN.otp, OTP_EXPIRES_IN: OTP_TOKEN.otpExpiry }
     });
     await gloabalMailMessage(
-      constant.EMAILS.APP_EMAIL,
       user.email,
-      undefined,
       messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
-      "Account Verification request",
-      `Hi, ${user.fullName}`
+      "Account Verification Request",
+      undefined,
+      undefined,
+      `Hi, ${user.fullName}`,
+      {
+        id: "email-verification-code",
+        variables: {
+          OTP_CODE: OTP_TOKEN.otp
+        }
+      }
     );
 
     httpResponse(req, res, reshttp.okCode, "OTP sent to your email");
@@ -295,12 +340,18 @@ export default {
           data: { OTP: OTP_TOKEN.otp, OTP_EXPIRES_IN: OTP_TOKEN.otpExpiry }
         });
         await gloabalMailMessage(
-          constant.EMAILS.APP_EMAIL,
           user.email,
-          undefined,
           messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
-          "Account Verification request",
-          `Hi, ${user.fullName}`
+          "Account Verification Request",
+          undefined,
+          undefined,
+          `Hi, ${user.fullName}`,
+          {
+            id: "email-verification-code",
+            variables: {
+              OTP_CODE: OTP_TOKEN.otp
+            }
+          }
         );
         return httpResponse(req, res, reshttp.unauthorizedCode, "Email verification required");
       }
@@ -345,7 +396,20 @@ export default {
       where: { email: user.email },
       data: { OTP: OTP_TOKEN.otp, OTP_EXPIRES_IN: OTP_TOKEN.otpExpiry }
     });
-    await gloabalMailMessage(email, messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`));
+    await gloabalMailMessage(
+      email,
+      messageSenderUtils.urlSenderMessage(`${OTP_TOKEN.otp}`, `30m`),
+      "Password Reset Request",
+      undefined,
+      undefined,
+      `Hi`,
+      {
+        id: "password-reset-code",
+        variables: {
+          OTP_CODE: OTP_TOKEN.otp
+        }
+      }
+    );
     return httpResponse(req, res, reshttp.okCode, "Verification link is sent to you email ");
   }),
   passwordReset: asyncHandler(async (req, res) => {
